@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 from random import choice
+from typing import override
 
 from ..pac_man import PacMan
 
@@ -23,12 +24,19 @@ class Ghost(Entity, ABC):
         color: tuple[int, int, int],
         corner_target: tuple[int, int],
         pac_man: PacMan,
+        player_number: int = 1,
     ) -> None:
         super().__init__(
             position=choice(Ghost.BASE),
             inital_mode=GhostMode.SCATTER,
             curr_dir=DirVector.UP,
+            player_number=player_number,
         )
+        if player_number != 1:
+            corner_target = (
+                corner_target[0] + Settings.GRID_COLUMNS + 1,
+                corner_target[1],
+            )
         self.color = color
         self.corner_target = corner_target
         self.pac_man = pac_man
@@ -52,6 +60,7 @@ class Ghost(Entity, ABC):
             case _:
                 return DirVector.UP
 
+    @override
     def move(self) -> tuple[int, int]:
         super().change_dir(self.chose_dir())
         return super().move()

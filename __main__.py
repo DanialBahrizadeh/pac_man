@@ -7,17 +7,20 @@ from .colors import Colors
 from .entities.entity import DirVector
 from .settings import Settings
 from .map import Map, TailType
-from .entities.pac_man import PacMan
+from .entities.pac_man import PacMan, PacManMode
 from .entities.ghosts.ghosts_manger import GhostManger
 
 
 class Game:
-    def __init__(self) -> None:
+    def __init__(self, player_number: int = 1) -> None:
         pg.init()
 
         self.score: int = 0
+        self.player_number = player_number
 
-        self.screen = pg.display.set_mode((Settings.WIDTH, Settings.HIGHT), pg.NOFRAME)
+        self.screen = pg.display.set_mode(
+            (Settings.WIDTH * 2 + Settings.TAIL_SIZE, Settings.HIGHT), pg.NOFRAME
+        )
         self.clock = pg.time.Clock()
 
         self.MOVE_PACMAN = pg.USEREVENT + 1
@@ -31,8 +34,8 @@ class Game:
 
     def run(self) -> None:
         Map.init()
-        self.pac_man = PacMan((14, 23))
-        self.ghost_manger = GhostManger(self.pac_man)
+        self.pac_man = PacMan((14, 23), player_number=self.player_number)
+        self.ghost_manger = GhostManger(self.pac_man, player_number=self.player_number)
         while Settings.RUNING:
             for event in pg.event.get():
                 match event.type:
@@ -55,8 +58,11 @@ class Game:
 
                     case self.MOVE_PACMAN:
                         self.ghost_manger.move()
+                        pacman_position = self.pac_man.move()
+                        if self.pac_man.mode == PacManMode.GHOST:
+                            break
 
-                        match Map.get_tail(pacman_position := self.pac_man.move()):
+                        match Map.get_tail(pacman_position):
                             case TailType.FOOD:
                                 self.score += 10
                             case TailType.PELLET:
@@ -104,7 +110,7 @@ class Game:
 
     def draw_map(self) -> None:
         for row_idx in range(Settings.GRID_ROWS):
-            for col_idx in range(Settings.GRID_COLUMNS):
+            for col_idx in range(Settings.GRID_COLUMNS * 2 + 1):
                 position = (col_idx, row_idx)
                 match Map.map[row_idx][col_idx]:
                     case TailType.WALL:
@@ -123,6 +129,8 @@ class Game:
                             kick=0,
                             border_radius=Settings.TAIL_SIZE,
                         )
+                    case TailType.BORDER:
+                        self.draw(position, Colors.RED, kick=0, border_radius=3)
 
     def draw_pac_man(self) -> None:
         self.draw(
@@ -148,5 +156,5 @@ class Game:
 
 
 if __name__ == "__main__":
-    Game().run()
+    Game(1).run()
     pg.quit()

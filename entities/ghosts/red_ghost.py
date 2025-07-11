@@ -6,11 +6,12 @@ from ...settings import Settings
 
 
 class RedGhost(Ghost):
-    def __init__(self, pac_man: PacMan) -> None:
+    def __init__(self, pac_man: PacMan, player_number: int = 1) -> None:
         super().__init__(
             color=Colors.RED,
             corner_target=(Settings.GRID_COLUMNS - 2, 1),
             pac_man=pac_man,
+            player_number=player_number,
         )
 
     def dist_to_chase_target_from(self, vector: DirVector) -> float:
