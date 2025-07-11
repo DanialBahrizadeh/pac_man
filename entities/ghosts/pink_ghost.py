@@ -5,8 +5,13 @@ from ...colors import Colors
 
 
 class PinkGhost(Ghost):
-    def __init__(self, pac_man: PacMan) -> None:
-        super().__init__(color=Colors.PINK, corner_target=(1, 1), pac_man=pac_man)
+    def __init__(self, pac_man: PacMan, player_number: int = 2) -> None:
+        super().__init__(
+            color=Colors.PINK,
+            corner_target=(1, 1),
+            pac_man=pac_man,
+            player_number=player_number,
+        )
 
     def dist_to_chase_target_from(self, vector: DirVector) -> float:
         return self.euclidean_dist(

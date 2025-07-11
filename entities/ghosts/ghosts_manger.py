@@ -8,11 +8,13 @@ from .blue_ghost import BlueGhost
 
 
 class GhostManger:
-    def __init__(self, pac_man: PacMan) -> None:
-        self.red_ghost = RedGhost(pac_man)
-        self.orange_ghost = OrangeGhost(pac_man)
-        self.pink_ghost = PinkGhost(pac_man)
-        self.blue_ghost = BlueGhost(pac_man, self.red_ghost)
+    def __init__(self, pac_man: PacMan, player_number: int = 1) -> None:
+        self.red_ghost = RedGhost(pac_man, player_number=player_number)
+        self.orange_ghost = OrangeGhost(pac_man, player_number=player_number)
+        self.pink_ghost = PinkGhost(pac_man, player_number=player_number)
+        self.blue_ghost = BlueGhost(
+            pac_man, self.red_ghost, player_number=player_number
+        )
 
         self._mode = GhostMode.SCATTER
         self.pac_man: PacMan = pac_man
@@ -57,6 +59,14 @@ class GhostManger:
             self.frighten_timer += 1
 
     def scatter_chase_loop(self) -> None:
+        if self.pac_man.position[0] in range(
+            Settings.GRID_COLUMNS, Settings.GRID_COLUMNS * 2 + 1
+        ):
+            if self.mode != GhostMode.SCATTER:
+                self.swtich_mode_to(GhostMode.SCATTER)
+
+            return None
+
         self.inc_timer()
         if self.mode == GhostMode.FRIGHTENED:
             if self.frighten_timer > 5:
@@ -77,6 +87,7 @@ class GhostManger:
                 self.swtich_mode_to(GhostMode.CHASE)
 
     def eat_or_eaten(self) -> int:
+        return 0
         eaten_ghosts: int = 0
         for ghost in self:
             if ghost.mode == GhostMode.EATEN and ghost.position in ghost.BASE:

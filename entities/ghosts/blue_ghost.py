@@ -8,12 +8,15 @@ from .red_ghost import RedGhost
 
 
 class BlueGhost(Ghost):
-    def __init__(self, pac_man: PacMan, red_ghost: RedGhost) -> None:
+    def __init__(
+        self, pac_man: PacMan, red_ghost: RedGhost, player_number: int = 1
+    ) -> None:
         super().__init__(
             color=Colors.CYAN,
             corner_target=(Settings.GRID_COLUMNS - 2, Settings.GRID_ROWS - 2),
             # corner_target=(1, 1),
             pac_man=pac_man,
+            player_number=player_number,
         )
         self.red_ghost = red_ghost
 

@@ -33,12 +33,19 @@ class DirVector(Enum):
 
 class Entity(Generic[T]):
     def __init__(
-        self, position: tuple[int, int], inital_mode: T, curr_dir: DirVector
+        self,
+        position: tuple[int, int],
+        inital_mode: T,
+        curr_dir: DirVector,
+        player_number: int = 1,
     ) -> None:
+        if player_number != 1:
+            position = (position[0] + Settings.GRID_COLUMNS + 1, position[1])
         self.position = position
         self.__mode = inital_mode
         self.curr_dir = curr_dir
         self.next_dir = curr_dir
+        self.player_number = player_number
 
     def change_dir(self, vector: DirVector):
         self.next_dir = vector
@@ -54,16 +61,19 @@ class Entity(Generic[T]):
 
         return self.position
 
-    @staticmethod
-    def can_move_to(point: tuple[int, int]) -> bool:
+    def can_move_to(self, point: tuple[int, int]) -> bool:
         x, y = point
-        if x not in range(Settings.GRID_COLUMNS):
-            return False
+        if self.player_number == 1:
+            if x not in range(Settings.GRID_COLUMNS):
+                return False
+        else:
+            if x not in range(Settings.GRID_COLUMNS + 1, Settings.GRID_COLUMNS * 2 + 1):
+                return False
 
         if y not in range(Settings.GRID_ROWS):
             return False
 
-        if Map.map[y][x] == TailType.WALL:
+        if Map.map[y][x] in [TailType.WALL, TailType.BORDER]:
             return False
 
         return True
