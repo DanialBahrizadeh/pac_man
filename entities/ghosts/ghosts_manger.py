@@ -87,7 +87,6 @@ class GhostManger:
                 self.swtich_mode_to(GhostMode.CHASE)
 
     def eat_or_eaten(self) -> int:
-        return 0
         eaten_ghosts: int = 0
         for ghost in self:
             if ghost.mode == GhostMode.EATEN and ghost.position in ghost.BASE:

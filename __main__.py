@@ -1,4 +1,7 @@
 import pygame as pg
+import socket
+import threading
+import json
 
 from .entities.ghosts.ghost import GhostMode
 
@@ -13,12 +16,22 @@ from .entities.ghosts.ghosts_manger import GhostManger
 
 class Game:
     def __init__(self) -> None:
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.bind(("localhost", 10000))
+        self.sock.listen(2)
+
         pg.init()
         self.screen = pg.display.set_mode(
             (Settings.WIDTH * 2 + Settings.TAIL_SIZE, Settings.HIGHT), pg.NOFRAME
         )
         self.player_one = Player(self.screen, 1)
         self.player_two = Player(self.screen, 2, self.player_one.pac_man)
+
+        self.player_one_conn = None
+        self.player_two_conn = None
+
+        while not self.player_two_conn:
+            self.accept_client()
 
         self.clock = pg.time.Clock()
 
@@ -31,6 +44,47 @@ class Game:
 
         pg.display.set_caption("Pacman")
 
+    def recv_json(self, conn):
+        buffer = b""
+        while True:
+            chunk = conn.recv(4096)
+            if not chunk:
+                return None
+
+            buffer += chunk
+            while b"\n" in buffer:
+                line, buffer = buffer.split(b"\n", 1)
+                obj = json.loads(line.decode())
+                return obj
+
+    def send_json(self, data):
+        msg = json.dumps(data) + "\n"
+        self.sock.send(msg.encode())
+
+    def accept_client(self):
+        conn, addr = self.sock.accept()
+        threading.Thread(target=self.handel_client, args=(conn, addr)).start()
+
+    def handel_client(self, conn, addr):
+        player_number = 1
+        if not self.player_one_conn:
+            self.player_one_conn = conn
+        elif not self.player_two_conn:
+            self.player_two_conn = conn
+            player_number = 2
+
+        while True:
+            data = self.recv_json(conn)
+            if not data:
+                break
+            print(data)
+            key = data["key"]
+            print(key)
+            if player_number == 1:
+                self.player_one.handel_key_down(key)
+            else:
+                self.player_two.handel_key_down(key)
+
     def run(self):
         Map.init()
 
@@ -39,10 +93,6 @@ class Game:
                 match event.type:
                     case pg.QUIT:
                         Settings.turn_off()
-
-                    case pg.KEYDOWN:
-                        self.player_one.handel_key_down(event.key)
-                        self.player_two.handel_key_down(event.key)
                     case self.EAT_OR_EATEN:
                         self.player_one.handel_eat_or_eaten()
                         self.player_two.handel_eat_or_eaten()
@@ -64,6 +114,11 @@ class Game:
             self.player_two.show_score()
             pg.display.flip()
             self.clock.tick(60)
+
+        if self.player_one.score > self.player_two.score:
+            print("player One won")
+        else:
+            print("player Two won")
 
     def draw(
         self,
@@ -124,13 +179,17 @@ class Player:
 
     def handel_key_down(self, key):
         match key:
-            case pg.K_UP:
+            # case pg.K_UP:
+            case "UP":
                 self.pac_man.change_dir(DirVector.UP)
-            case pg.K_RIGHT:
+            # case pg.K_RIGHT:
+            case "RIGHT":
                 self.pac_man.change_dir(DirVector.RIGHT)
-            case pg.K_DOWN:
+            # case pg.K_DOWN:
+            case "DOWN":
                 self.pac_man.change_dir(DirVector.DOWN)
-            case pg.K_LEFT:
+            # case pg.K_LEFT:
+            case "LEFT":
                 self.pac_man.change_dir(DirVector.LEFT)
 
     def handel_eat_or_eaten(self):
@@ -142,9 +201,9 @@ class Player:
         if self.other_player_pac_man:
             if self.pac_man.position == self.other_player_pac_man.position:
                 if self.pac_man.mode == PacManMode.GHOST:
-                    print("player two won")
+                    self.score += 200
                 else:
-                    print("player one won")
+                    self.score -= 200
                 Settings.turn_off()
             if self.pac_man.mode == PacManMode.GHOST:
                 return
