@@ -4,10 +4,10 @@ class Settings:
     GRID_COLUMNS = 28
 
     WIDTH = GRID_COLUMNS * TAIL_SIZE
-    HIGHT = GRID_ROWS * TAIL_SIZE
+    HEIGHT = GRID_ROWS * TAIL_SIZE
 
     HOST = "127.0.0.1"
-    PORT = "8080"
+    PORT = 8000
 
     RUNING = True
 
