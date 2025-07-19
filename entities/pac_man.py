@@ -40,12 +40,12 @@ class PacMan(Entity[PacManMode]):
     @override
     def move(self) -> tuple[int, int]:
         if self.player_number == 1:
-            if self.position[0] not in range(Settings.GRID_COLUMNS):
+            if self.position[0] > Settings.GRID_COLUMNS:
                 self.go_ghost()
             else:
                 self.go_normal()
         else:
-            if self.position[0] in range(Settings.GRID_COLUMNS):
+            if self.position[0] < Settings.GRID_COLUMNS:
                 self.go_ghost()
             else:
                 self.go_normal()

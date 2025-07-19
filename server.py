@@ -62,11 +62,18 @@ class Server:
         await self.sio.emit("update_state", state)
 
     async def game_loop(self):
+        game_started = False
         Map.init()
         while Settings.RUNING:
             if not self.player_one_sid or not self.player_two_sid:
                 continue
             for event in pg.event.get():
+                if not game_started and event.type == self.game.START_GAME:
+                    game_started = True
+
+                if not game_started:
+                    continue
+
                 match event.type:
                     case pg.QUIT:
                         Settings.turn_off()
@@ -80,6 +87,16 @@ class Server:
                         self.game.player_one.handel_scatter_change_loop()
                         self.game.player_two.handel_scatter_change_loop()
 
+                if self.game.player_one.eaten or self.game.player_two.eaten:
+                    if self.game.player_two.score > self.game.player_one.score:
+                        await self.sio.emit("game_over", to=self.player_one_sid)
+                        await self.sio.emit("game_won", to=self.player_two_sid)
+                    else:
+                        await self.sio.emit("game_over", to=self.player_two_sid)
+                        await self.sio.emit("game_won", to=self.player_two_sid)
+
+                    pg.quit()
+                    sys.exit()
             self.game.clock.tick(60)
 
             await self.broadcast_game_state()
@@ -98,11 +115,10 @@ if __name__ == "__main__":
     async def main():
         await server.start()
         while True:
-            await asyncio.sleep(1) 
+            await asyncio.sleep(1)
 
     loop = asyncio.get_event_loop()
     loop.create_task(main())
-
 
     def run_uvicorn():
         uvicorn.run(server.app, host=Settings.HOST, port=Settings.PORT)

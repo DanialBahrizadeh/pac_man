@@ -37,13 +37,25 @@ class Client:
             data["map"] = Map.tranlate_from_str(data["map"])
             self.game_state = data
 
+        @self.sio.on("game_over")  # pyright: ignore
+        def on_game_over():
+            print("you lost")
+            pg.quit()
+            sys.exit()
+
+        @self.sio.on("game_won")  # pyright: ignore
+        def on_game_won():
+            print("you won")
+            pg.quit()
+            sys.exit()
+
     def connect(self):
         self.sio.connect(f"http://{Settings.HOST}:{Settings.PORT}")
 
     def start(self):
         pg.init()
 
-        while Settings.RUNING:
+        while True:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
@@ -65,7 +77,7 @@ class Client:
             if self.game_state:
                 self.draw_map()
                 self.draw_entities()
-                pass
+                self.show_score()
 
             pg.display.flip()
             self.clock.tick(60)
@@ -128,6 +140,27 @@ class Client:
                         )
                     case TailType.BORDER:
                         self.draw(position, Colors.RED, kick=0, border_radius=3)
+
+    def show_score(self):
+        scroe_label = pg.font.SysFont("Arial", 24)
+        player1_score_surface = scroe_label.render(
+            str(self.game_state["p1"]["score"]), True, Colors.FONT_COLOR
+        )
+        player2_score_surface = scroe_label.render(
+            str(self.game_state["p2"]["score"]), True, Colors.FONT_COLOR
+        )
+
+        self.screen.blit(
+            player1_score_surface, (1 * Settings.TAIL_SIZE, 10.75 * Settings.TAIL_SIZE)
+        )
+
+        self.screen.blit(
+            player2_score_surface,
+            (
+                (2 + Settings.GRID_COLUMNS) * Settings.TAIL_SIZE,
+                10.75 * Settings.TAIL_SIZE,
+            ),
+        )
 
 
 if __name__ == "__main__":

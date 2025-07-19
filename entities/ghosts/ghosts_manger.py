@@ -103,9 +103,7 @@ class GhostManger:
                     case GhostMode.EATEN:
                         pass
                     case _:
-                        Settings.turn_off()
-                        pg.quit()
-                        sys.exit(0)
+                        eaten_ghosts = -1
 
         return eaten_ghosts
 
