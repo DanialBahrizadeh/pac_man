@@ -4,11 +4,11 @@ from .settings import Settings
 
 
 class TailType(Enum):
-    WALL = auto()
-    EMPTY = auto()
-    FOOD = auto()
-    PELLET = auto()
-    BORDER = auto()
+    WALL = "#"
+    EMPTY = "*"
+    FOOD = "."
+    PELLET = "@"
+    BORDER = "!"
 
 
 class Map:
@@ -49,22 +49,7 @@ class Map:
 
     @classmethod
     def init(cls) -> None:
-        for row in cls.map_str_rpre:
-            map_row = []
-            for char in row:
-                match char:
-                    case "#":
-                        map_row.append(TailType.WALL)
-                    case ".":
-                        map_row.append(TailType.FOOD)
-                    case "@":
-                        map_row.append(TailType.PELLET)
-                    case "!":
-                        map_row.append(TailType.BORDER)
-                    case _:
-                        map_row.append(TailType.EMPTY)
-
-            cls.map.append(map_row)
+        cls.map = cls.tranlate_from_str(cls.map_str_rpre)
 
     @classmethod
     def get_tail(cls, position: tuple[int, int]) -> TailType:
@@ -88,3 +73,28 @@ class Map:
         if cls.get_tail(position) == TailType.BORDER:
             return None
         cls.map[y][x] = value
+
+    @classmethod
+    def tranlate_from_str(cls, map_str_rpre: list[str]):
+        map = []
+        for row in map_str_rpre:
+            map_row = []
+            for char in row:
+                match char:
+                    case "#":
+                        map_row.append(TailType.WALL)
+                    case ".":
+                        map_row.append(TailType.FOOD)
+                    case "@":
+                        map_row.append(TailType.PELLET)
+                    case "!":
+                        map_row.append(TailType.BORDER)
+                    case _:
+                        map_row.append(TailType.EMPTY)
+
+            map.append(map_row)
+        return map
+
+    @classmethod
+    def tranlate_to_str(cls, map: list[list[TailType]]):
+        return [[tile.value for tile in row] for row in map]

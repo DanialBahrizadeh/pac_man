@@ -6,6 +6,9 @@ from .orange_ghost import OrangeGhost
 from .pink_ghost import PinkGhost
 from .blue_ghost import BlueGhost
 
+import pygame as pg
+import sys
+
 
 class GhostManger:
     def __init__(self, pac_man: PacMan, player_number: int = 1) -> None:
@@ -100,7 +103,7 @@ class GhostManger:
                     case GhostMode.EATEN:
                         pass
                     case _:
-                        Settings.turn_off()
+                        eaten_ghosts = -1
 
         return eaten_ghosts
 

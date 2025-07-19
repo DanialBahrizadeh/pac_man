@@ -29,6 +29,7 @@ class Ghost(Entity, ABC):
         super().__init__(
             position=choice(Ghost.BASE),
             inital_mode=GhostMode.SCATTER,
+            # inital_mode=GhostMode.CHASE,
             curr_dir=DirVector.UP,
             player_number=player_number,
         )
@@ -192,46 +193,102 @@ class Ghost(Entity, ABC):
         index = 0
         dist = [self.euclidean_dist(start, goal)]
 
+        max_iters = Settings.GRID_ROWS * Settings.GRID_COLUMNS * 5
+        iters = 0
+
+        # If already at goal, handle one‑step move
         if start == goal:
-            dir = self.dir_valid_move(index, path, ban_move, visited, start, goal)
-            if not dir:
-                return []
+            first_dir = self.dir_valid_move(index, path, ban_move, visited, start, goal)
+            return [first_dir] if first_dir else []
 
-            path.append(dir)
-            start = dir.add_vector_to(start)
-            visited.add(start)
-            dist.append(self.euclidean_dist(start, goal))
-
-        while start != goal:
-            index += 1
-            chosen_dir: DirVector | None = self.dir_get_closer(
+        while start != goal and iters < max_iters:
+            iters += 1
+            chosen = self.dir_get_closer(
                 index, path, dist, ban_move, visited, start, goal
             )
-
-            if chosen_dir:
-                path.append(chosen_dir)
-                start = chosen_dir.add_vector_to(start)
+            if chosen:
+                path.append(chosen)
+                start = chosen.add_vector_to(start)
                 dist.append(self.euclidean_dist(start, goal))
                 visited.add(start)
                 index += 1
-            else:
-                chosen_dir = self.dir_valid_move(
-                    index, path, ban_move, visited, start, goal
-                )
+                continue
 
-                if chosen_dir:
-                    path.append(chosen_dir)
-                    start = chosen_dir.add_vector_to(start)
-                    dist.append(self.euclidean_dist(start, goal))
-                    visited.add(start)
-                    index += 1
-                    continue
+            chosen = self.dir_valid_move(index, path, ban_move, visited, start, goal)
+            if chosen:
+                path.append(chosen)
+                start = chosen.add_vector_to(start)
+                dist.append(self.euclidean_dist(start, goal))
+                visited.add(start)
+                index += 1
+                continue
 
-                dir = path.pop()
-                dist.pop()
-                ban_move.add((index, dir))
-                index -= 1
-                visited.remove(start)
-                start = dir.opp_dir().add_vector_to(start)
+            # Backtrack
+            if not path:
+                break
+            last = path.pop()
+            dist.pop()
+            ban_move.add((index, last))
+            index = max(0, index - 1)
+            # Reverse position for backtracking
+            start = last.opp_dir().add_vector_to(start)
 
+        if iters >= max_iters:
+            # Couldn't find path: return empty to avoid freeze
+            return []
+
+        # Drop the dummy first element
         return path[1:]
+
+    # def find_path(
+    #     self, start: tuple[int, int], goal: tuple[int, int]
+    # ) -> list[DirVector]:
+    #     path: list[DirVector] = [self.curr_dir]
+    #     ban_move: set[tuple[int, DirVector]] = set()
+    #     visited: set[tuple[int, int]] = {start}
+    #     index = 0
+    #     dist = [self.euclidean_dist(start, goal)]
+    #
+    #     if start == goal:
+    #         dir = self.dir_valid_move(index, path, ban_move, visited, start, goal)
+    #         if not dir:
+    #             return []
+    #
+    #         path.append(dir)
+    #         start = dir.add_vector_to(start)
+    #         visited.add(start)
+    #         dist.append(self.euclidean_dist(start, goal))
+    #
+    #     while start != goal:
+    #         index += 1
+    #         chosen_dir: DirVector | None = self.dir_get_closer(
+    #             index, path, dist, ban_move, visited, start, goal
+    #         )
+    #
+    #         if chosen_dir:
+    #             path.append(chosen_dir)
+    #             start = chosen_dir.add_vector_to(start)
+    #             dist.append(self.euclidean_dist(start, goal))
+    #             visited.add(start)
+    #             index += 1
+    #         else:
+    #             chosen_dir = self.dir_valid_move(
+    #                 index, path, ban_move, visited, start, goal
+    #             )
+    #
+    #             if chosen_dir:
+    #                 path.append(chosen_dir)
+    #                 start = chosen_dir.add_vector_to(start)
+    #                 dist.append(self.euclidean_dist(start, goal))
+    #                 visited.add(start)
+    #                 index += 1
+    #                 continue
+    #
+    #             dir = path.pop()
+    #             dist.pop()
+    #             ban_move.add((index, dir))
+    #             index -= 1
+    #             visited.remove(start)
+    #             start = dir.opp_dir().add_vector_to(start)
+    #
+    #     return path[1:]
