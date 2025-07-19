@@ -21,6 +21,7 @@ class Client:
             (Settings.WIDTH * 2 + Settings.TAIL_SIZE, Settings.HEIGHT), pg.NOFRAME
         )
         self.clock = pg.time.Clock()
+        self.running = True
 
     def handel_events(self):
         @self.sio.event
@@ -30,6 +31,7 @@ class Client:
         @self.sio.event
         def disconnect():
             print("Disconnect from the server")
+            self.running = False
 
         @self.sio.on("update_state")  # pyright: ignore
         def on_update_state(data):
@@ -40,14 +42,12 @@ class Client:
         @self.sio.on("game_over")  # pyright: ignore
         def on_game_over():
             print("you lost")
-            pg.quit()
-            sys.exit()
+            self.running = False
 
         @self.sio.on("game_won")  # pyright: ignore
         def on_game_won():
             print("you won")
-            pg.quit()
-            sys.exit()
+            self.running = False
 
     def connect(self):
         self.sio.connect(f"http://{Settings.HOST}:{Settings.PORT}")
@@ -55,7 +55,7 @@ class Client:
     def start(self):
         pg.init()
 
-        while True:
+        while self.running:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
@@ -81,6 +81,10 @@ class Client:
 
             pg.display.flip()
             self.clock.tick(60)
+
+        pg.quit()
+        self.sio.disconnect()
+        print("Client shutting down.")
 
     def draw(
         self,

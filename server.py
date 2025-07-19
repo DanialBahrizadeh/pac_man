@@ -95,15 +95,13 @@ class Server:
                         await self.sio.emit("game_over", to=self.player_two_sid)
                         await self.sio.emit("game_won", to=self.player_two_sid)
 
-                    pg.quit()
-                    sys.exit()
+                    Settings.turn_off()
             self.game.clock.tick(60)
 
             await self.broadcast_game_state()
             await asyncio.sleep(0)
 
         pg.quit()
-        sys.exit()
 
     async def start(self):
         asyncio.create_task(self.game_loop())
